@@ -64,6 +64,34 @@ Response body:
 }
 ```
 
+### GET `/history`
+
+Returns recent optimization logs, newest first.
+
+Query params:
+
+- `limit` (optional, default `10`, min `1`, max `100`) - Number of records to return.
+
+Example:
+
+```bash
+curl "http://localhost:8000/history?limit=5"
+```
+
+Response body:
+
+```json
+[
+  {
+    "id": 12,
+    "original_prompt": "Write about dogs",
+    "optimized_prompt": "...",
+    "changes": "...",
+    "created_at": "2026-04-18T12:34:56.789012"
+  }
+]
+```
+
 ## Environment Variables
 
 Copy `.env.example` to `.env` and fill in values.
