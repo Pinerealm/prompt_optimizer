@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from service import optimize_prompt
 import logging
-from database import init_db, log_optimization
+from datetime import datetime
+
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from database import get_recent_optimizations, init_db, log_optimization
+from service import optimize_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,14 @@ class PromptResponse(BaseModel):
     changes: str = Field(description="Explanation of what was improved and why")
 
 
+class OptimizationLog(BaseModel):
+    id: int = Field(description="Unique identifier for the optimization log")
+    original_prompt: str = Field(description="The original prompt that was submitted")
+    optimized_prompt: str = Field(description="The improved prompt")
+    changes: str = Field(description="Explanation of what was improved and why")
+    created_at: datetime = Field(description="When the optimization was logged")
+
+
 @app.post("/optimize", response_model=PromptResponse)
 def optimize_prompt_endpoint(request: PromptRequest):
     try:
@@ -56,3 +67,16 @@ def optimize_prompt_endpoint(request: PromptRequest):
         logger.error(f"Failed to log optimization: {e}")
 
     return PromptResponse(**result)
+
+
+@app.get("/history", response_model=list[OptimizationLog])
+def optimization_history(limit: int = Query(10, ge=1, le=100)):
+    try:
+        logs = get_recent_optimizations(limit=limit)
+        return [OptimizationLog(**log) for log in logs]
+    except Exception as e:
+        logger.error(f"Failed to fetch optimization history: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch optimization history.",
+        )
