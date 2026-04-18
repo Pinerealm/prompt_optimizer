@@ -1,14 +1,15 @@
-from openai import OpenAI
-from dotenv import load_dotenv
 import json
 import os
+
+from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
 client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://api.openai.com/v1"
+    api_key=os.environ.get("OPENAI_API_KEY"), base_url="https://api.openai.com/v1"
 )
+
 
 def optimize_prompt(prompt: str, goal: str) -> dict:
     """Send a prompt to the LLM for optimization and return structured results."""
@@ -33,20 +34,18 @@ Optimize this prompt to better achieve the stated goal."""
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": user_message},
         ],
         response_format={"type": "json_object"},
-        temperature=0.7
+        temperature=0.7,
     )
 
     result_text = response.choices[0].message.content
 
     try:
-        result = json.loads(result_text)
+        result = json.loads(result_text)  # type: ignore
     except json.JSONDecodeError:
-        raise ValueError(
-            f"LLM returned invalid JSON: {result_text[:200]}"
-        )
+        raise ValueError(f"LLM returned invalid JSON: {result_text[:200]}")  # type: ignore
 
     if "optimized_prompt" not in result or "changes" not in result:
         raise ValueError(
@@ -56,5 +55,5 @@ Optimize this prompt to better achieve the stated goal."""
     return {
         "original_prompt": prompt,
         "optimized_prompt": result["optimized_prompt"],
-        "changes": result["changes"]
+        "changes": result["changes"],
     }
