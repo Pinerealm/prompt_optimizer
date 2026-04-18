@@ -9,6 +9,10 @@ logger = logging.getLogger(__name__)
 
 def get_db_connection():
     """Create a connection to the PostgreSQL database."""
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return psycopg2.connect(database_url)
+
     return psycopg2.connect(
         host=os.getenv("DB_HOST", "db"),
         port=int(os.getenv("DB_PORT", "5432")),
