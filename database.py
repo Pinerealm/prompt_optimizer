@@ -1,8 +1,9 @@
-import psycopg2
+import logging
 import os
 import time
-import logging
 from datetime import datetime, timezone
+
+import psycopg2
 
 logger = logging.getLogger(__name__)
 
@@ -68,3 +69,32 @@ def log_optimization(original_prompt, optimized_prompt, changes):
     conn.commit()
     cur.close()
     conn.close()
+
+
+def get_recent_optimizations(limit=10):
+    """Return recent optimization logs ordered by newest first."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT id, original_prompt, optimized_prompt, changes, created_at
+        FROM optimization_logs
+        ORDER BY created_at DESC
+        LIMIT %s;
+        """,
+        (limit,),
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "original_prompt": row[1],
+            "optimized_prompt": row[2],
+            "changes": row[3],
+            "created_at": row[4],
+        }
+        for row in rows
+    ]
